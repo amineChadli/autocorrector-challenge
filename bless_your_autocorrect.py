@@ -6,11 +6,6 @@ Created on Sun Aug 20 22:27:40 2017
 """
 '''bless your autocorrect'''
 
-
-# this function check if a string ch1 start with another string ch2'''
-def start_with(ch1,ch2):
-  return ch1.startswith(ch2)
-
 # this function get the minimum triplet in a list
 # using this order : (a,b,c) < (e,f,g) <--> b < f
 # in our case b and f represent the difference between each string in the dictionnary and the word we look for 
@@ -33,44 +28,61 @@ def dif_right(ch1,ch2):
 def dif(ch1,ch2):
   return max(len(ch1),len(ch2)) - get_num_similar(ch1,ch2)
 
-'''and this is a function that returns a new_word from the previous word , a list of elemens and the number of buttons we clicked'''
-def compare(dict,word):
-    sum=0
-    size = len(word)
-    #L=np.zeros(size)
-    L=[]
-    M=[]
+def get_list_scores(dict,word):
+    word_size = len(word)
+    list_scores = []
     i = 1
-    ch = " "
-    while(i<=size):
+    
+    while(i<=word_size):
       ch = word[:i]
       for j in range(0,len(dict)):
-        if(start_with(dict[j],ch)):
-          if (j in M) : 
-            break
-          L.append((i,i+dif(word,dict[j]),j))
-          M.append(j)
+        if(dict[j].startswith(ch)):
+          list_scores.append((i,i+dif(word,dict[j]),j))
           break
       i+=1
-    if(len(L)==0):
-      min = len(word)
-      sum+=min
-      return "",[],sum
+
+    return list_scores
+
+'''and this is a function that returns a new_word from the previous word , a list of elemens and the number of keywords we pressed'''
+def compare(dict,word):
+    
+    list_scores = get_list_scores(dict,word)
+
+    if(len(list_scores)==0):
+      nb_total_keys = len(word)
+      return "",[],nb_total_keys
+    
     else : 
-      c = get_min_triplet(L)
+      nb_total_keys = 0
+      score_triplet = get_min_triplet(list_scores)
       #print("c[2]" ,dict[c[2]])
-      sum+=c[0]+1
-      K = []
-      dif_r=dif_right(dict[c[2]],word)
-      c_2 = len(dict[c[2]]) - dif_r
-      sum+=dif_r
-      for k in range(len(M)):
-        new_member = dict[M[k]][c_2:]
+      nb_before_tab = score_triplet[0]
+      nb_total_keys += nb_before_tab + 1
+      
+      close_word_index = score_triplet[2]
+      close_word = dict[close_word_index]
+
+      difference_right = dif_right(close_word,word)
+      nb_total_keys += difference_right
+
+      shared_keys  = len(close_word) - difference_right
+      new_dict = []
+      for k in range(len(list_scores)):
+        close_word_index = list_scores[k][2]
+        new_member = dict[close_word_index][shared_keys:]
         if(new_member!=""):
-          K.append(new_member)
-      return word[c_2:],K,sum
+          new_dict.append(new_member)
+      return word[shared_keys:],new_dict,nb_total_keys
    
-sum = 0    
+def get_min_keys_number(dicto, word):
+    word_0 = word
+    nb_total_keys = 0
+    while(word!=""):
+       word,dicto,nb_keys = compare(dicto,word)
+       nb_total_keys+=nb_keys
+    return min(nb_total_keys,len(word_0))
+      
+# main
 dict = []
 s=raw_input("")
 n = int(s[0])
@@ -82,16 +94,11 @@ words=[]
 for j in range(0,m):
     word = input("")
     words.append(word)
+
 for j in range(0,m):
-    init_word=words[j]
     word = words[j]
     dicto=dict
-    sum = 0
-    while(word!=""):
-          
-       word,dicto,l = compare(dicto,word)
-       sum+=l
-    print(min(sum,len(init_word)))
+    print(get_min_keys_number(dicto,word))
     
 
 
